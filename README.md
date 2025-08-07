@@ -22,24 +22,69 @@ This Node.js proxy bridges OpenRouter's API to tools expecting an Ollama server,
 
 ## Installation
 
-Follow these steps to set up the proxy locally:
+### Option 1: Docker (Recommended)
 
-1.  **Clone the Repository**
+The easiest way to run the proxy is using Docker:
+
+1. **Clone the Repository**
 
     ```bash
     git clone https://github.com/gagin/openrouter-to-ollama-proxy.git
     cd openrouter-to-ollama-proxy
     ```
 
-2.  **Install Dependencies**
+2. **Set Environment Variable**
+
+    Set your OpenRouter API key as an environment variable:
+
+    ```bash
+    export OPENROUTER_API_KEY=your-api-key-here
+    ```
+
+    Replace `your-api-key-here` with your key from OpenRouter's dashboard.
+
+3. **Run with Docker Compose**
+
+    ```bash
+    docker-compose up -d
+    ```
+
+    The proxy will be available at `http://localhost:11434`.
+
+4. **Alternative: Run with Docker directly**
+
+    ```bash
+    # Build the image
+    docker build -t openrouter-proxy .
+    
+    # Run the container
+    docker run -d \
+      --name openrouter-proxy \
+      -p 11434:11434 \
+      -e OPENROUTER_API_KEY=your-api-key-here \
+      openrouter-proxy
+    ```
+
+### Option 2: Local Installation
+
+Follow these steps to set up the proxy locally:
+
+1. **Clone the Repository**
+
+    ```bash
+    git clone https://github.com/gagin/openrouter-to-ollama-proxy.git
+    cd openrouter-to-ollama-proxy
+    ```
+
+2. **Install Dependencies**
 
     Install the required Node.js packages:
 
     ```bash
-    npm install express axios dotenv
+    npm install
     ```
 
-3.  **Configure Environment Variables**
+3. **Configure Environment Variables**
 
     Create an `.env` file in the project root with your OpenRouter API key:
 
@@ -49,12 +94,12 @@ Follow these steps to set up the proxy locally:
 
     Replace `your-api-key-here` with your key from OpenRouter's dashboard. Keep this file private—it's excluded via `.gitignore`.
 
-4.  **Run the Proxy**
+4. **Run the Proxy**
 
     Start the proxy server:
 
     ```bash
-    node proxy.js
+    npm start
     ```
 
     You'll see:
@@ -177,10 +222,19 @@ Any chat requests for `gemma3:1b`, `SmolLM2:135m`, or `deepseek-r1:1.5b` will be
 
 ## Troubleshooting
 
-* **Proxy Logs:** Check the terminal running `node proxy.js` for request/response details.
+### Docker Issues
+
+* **Container Logs:** View logs with `docker logs openrouter-proxy` or `docker-compose logs openrouter-proxy`.
+* **Environment Variable:** Ensure `OPENROUTER_API_KEY` is set correctly. You can check with `docker exec openrouter-proxy env | grep OPENROUTER`.
+* **Port Conflict:** If port 11434 is already in use, stop the conflicting service or change the port mapping in `docker-compose.yml`.
+* **Container Health:** Check container health with `docker ps` or `docker-compose ps`.
+
+### General Issues
+
+* **Proxy Logs:** Check the terminal running `node proxy.js` for request/response details (local installation).
 * **Open-WebUI Errors:** View logs with `docker logs open-webui`.
 * **Port Conflict:** If 11434 is taken, identify and stop the conflicting service. If Ollama is running and you need to stop it, use the appropriate method for your system, as `killall ollama` might not prevent automatic restarts.
-* **API Key Issues:** Ensure `OPENROUTER_API_KEY` in `.env` is valid.
+* **API Key Issues:** Ensure `OPENROUTER_API_KEY` in `.env` is valid (local installation) or properly set as environment variable (Docker).
 * **Local Ollama Issues:** If using local models, ensure your Ollama server is running on port 11435 and the specified models are available.
 
 ## Notes

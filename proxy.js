@@ -1,25 +1,56 @@
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
+const crypto = require('crypto');
 const app = express();
 
 app.use(express.json());
+app.use(express.text());
+app.use(express.raw());
 
 // Proxy Ollama's /api/chat to OpenRouter's /v1/chat/completions
 app.post('/api/chat', async (req, res) => {
+  console.log('Request headers:', req.headers);
+  console.log('Request body type:', typeof req.body);
+  console.log('Request body:', req.body);
   console.log('Received /api/chat request:', JSON.stringify(req.body, null, 2));
+  
+  // Try to parse body if it's a string
+  if (typeof req.body === 'string') {
+    try {
+      req.body = JSON.parse(req.body);
+      console.log('Parsed body from string:', JSON.stringify(req.body, null, 2));
+    } catch (e) {
+      console.error('Failed to parse body as JSON:', e.message);
+    }
+  }
+  
   try {
     // Validate incoming request
-    if (!req.body.model) {
+    if (!req.body || !req.body.model) {
       throw new Error('Missing required field: model');
     }
-    if (!req.body.messages || !Array.isArray(req.body.messages) || req.body.messages.length === 0) {
-      throw new Error('Missing or invalid required field: messages');
+    
+    // Handle both Ollama's 'prompt' format and OpenRouter's 'messages' format
+    let messages;
+    if (req.body.prompt) {
+      // Convert Ollama's prompt format to messages format
+      messages = [
+        {
+          role: 'user',
+          content: req.body.prompt
+        }
+      ];
+    } else if (req.body.messages && Array.isArray(req.body.messages) && req.body.messages.length > 0) {
+      // Use existing messages format
+      messages = req.body.messages;
+    } else {
+      throw new Error('Missing required field: prompt or messages');
     }
 
     const openRouterRequest = {
       model: req.body.model.replace(':latest', ''),
-      messages: req.body.messages,
+      messages: messages,
       stream: req.body.stream || false
     };
 
@@ -146,7 +177,7 @@ app.get('/api/tags', async (req, res) => {
         name: model.name || model.id,
         modified_at: '2025-02-27T00:00:00Z',
         size: 0,
-        digest: 'n/a'
+        digest: crypto.createHash('sha256').update(model.id).digest('hex')
       }))
     };
 
