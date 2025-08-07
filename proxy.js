@@ -14,13 +14,27 @@ app.post('/api/chat', async (req, res) => {
     if (!req.body.model) {
       throw new Error('Missing required field: model');
     }
-    if (!req.body.messages || !Array.isArray(req.body.messages) || req.body.messages.length === 0) {
-      throw new Error('Missing or invalid required field: messages');
+    
+    // Handle both Ollama's 'prompt' format and OpenRouter's 'messages' format
+    let messages;
+    if (req.body.prompt) {
+      // Convert Ollama's prompt format to messages format
+      messages = [
+        {
+          role: 'user',
+          content: req.body.prompt
+        }
+      ];
+    } else if (req.body.messages && Array.isArray(req.body.messages) && req.body.messages.length > 0) {
+      // Use existing messages format
+      messages = req.body.messages;
+    } else {
+      throw new Error('Missing required field: prompt or messages');
     }
 
     const openRouterRequest = {
       model: req.body.model.replace(':latest', ''),
-      messages: req.body.messages,
+      messages: messages,
       stream: req.body.stream || false
     };
 
