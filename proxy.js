@@ -5,13 +5,29 @@ const crypto = require('crypto');
 const app = express();
 
 app.use(express.json());
+app.use(express.text());
+app.use(express.raw());
 
 // Proxy Ollama's /api/chat to OpenRouter's /v1/chat/completions
 app.post('/api/chat', async (req, res) => {
+  console.log('Request headers:', req.headers);
+  console.log('Request body type:', typeof req.body);
+  console.log('Request body:', req.body);
   console.log('Received /api/chat request:', JSON.stringify(req.body, null, 2));
+  
+  // Try to parse body if it's a string
+  if (typeof req.body === 'string') {
+    try {
+      req.body = JSON.parse(req.body);
+      console.log('Parsed body from string:', JSON.stringify(req.body, null, 2));
+    } catch (e) {
+      console.error('Failed to parse body as JSON:', e.message);
+    }
+  }
+  
   try {
     // Validate incoming request
-    if (!req.body.model) {
+    if (!req.body || !req.body.model) {
       throw new Error('Missing required field: model');
     }
     
