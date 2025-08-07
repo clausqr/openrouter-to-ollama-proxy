@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
+const crypto = require('crypto');
 const app = express();
 
 app.use(express.json());
@@ -146,7 +147,7 @@ app.get('/api/tags', async (req, res) => {
         name: model.name || model.id,
         modified_at: '2025-02-27T00:00:00Z',
         size: 0,
-        digest: 'n/a'
+        digest: crypto.createHash('sha256').update(model.id).digest('hex')
       }))
     };
 
